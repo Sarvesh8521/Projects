@@ -1,0 +1,110 @@
+import re
+import itertools
+
+# movies
+movies = ['Movie1', 'Movie2', 'Movie3']
+
+#  seat 
+seats = {movie: [['Available' for _ in range(10)] for _ in range(10)] for movie in movies}
+
+# Discounts
+def apply_discount(ticket_price, discount_code):
+    discount_map = {'DISCOUNT10': 0.10, 'DISCOUNT20': 0.20}  # discount code to percentage
+    discount = discount_map.get(discount_code, 0)
+    return ticket_price * (1 - discount)
+
+# Seat valid
+def is_valid_seat(seat_input):
+    return bool(re.match(r"^[A-J][0-9]Rs.", seat_input))
+
+
+def show_available_seats(movie):
+    print(f"Available Seats for {movie}:")
+    for row in range(10):
+        row_seats = ''.join([f'{seats[movie][row][col][0]} ' for col in range(10)])
+        print(f"Row {row+1}: {row_seats}")
+
+
+def book_tickets(movie, num_tickets, discount_code=None):
+    available_seats = []
+    for row in range(10):
+        for col in range(10):
+            if seats[movie][row][col] == 'Available':
+                available_seats.append(f"{chr(65+row)}{col+1}")
+    
+    if len(available_seats) < num_tickets:
+        print("Not enough available seats.")
+        return
+    
+    
+    while True:
+        print(f"Available seats: {', '.join(available_seats)}")
+        seat_input = input(f"Please enter {num_tickets} seats (e.g., A1, B2, C3): ").upper()
+
+      
+        seats_to_book = [seat.strip() for seat in seat_input.split(',')]
+        
+        if len(seats_to_book) != num_tickets:
+            print(f"Please enter exactly {num_tickets} seat(s).")
+            continue
+
+        # seats  valid and available
+        invalid_seats = [seat for seat in seats_to_book if seat not in available_seats]
+        
+        if invalid_seats:
+            print(f"The following seats are either invalid or already booked: {', '.join(invalid_seats)}")
+            continue
+        
+        # If  valid,  book tkt
+        for seat in seats_to_book:
+            row = ord(seat[0]) - 65                     # Convert row to index
+            col = int(seat[1]) - 1                      # Convert column to index
+            seats[movie][row][col] = 'Booked'
+            available_seats.remove(seat)
+        
+        # total price
+        ticket_price = 10  # Base ticket price
+        total_price = ticket_price * num_tickets
+        
+        if discount_code:
+            total_price = apply_discount(ticket_price, discount_code) * num_tickets
+        
+        #  booking summary
+        print(f"Successfully booked the following seats: {', '.join(seats_to_book)}")
+        print(f"Total price: Rs.{total_price:.2f}")
+        print("Thank you for booking with us!")
+        break  
+
+
+def main():
+    while True:
+        print("\nWelcome to the Movie Ticket Booking System")
+        print("Available Movies:")
+        for idx, movie in enumerate(movies, start=1):
+            print(f"{idx}. {movie}")
+        
+        movie_choice = input("Choose a movie by number (or type 'exit' to quit): ")
+        
+        if movie_choice.lower() == 'exit':
+            break
+        
+        if not movie_choice.isdigit() or int(movie_choice) not in range(1, len(movies)+1):
+            print("Invalid movie choice, please try again.")
+            continue
+        
+        movie = movies[int(movie_choice)-1]
+        show_available_seats(movie)
+        
+        num_tickets = input("How many tickets would you like to book? ")
+        if not num_tickets.isdigit() or int(num_tickets) <= 0:
+            print("Invalid number of tickets.")
+            continue
+        num_tickets = int(num_tickets)
+        
+        discount_code = input("Enter a discount code (or press Enter to skip): ").strip()
+        
+        book_tickets(movie, num_tickets, discount_code)
+        print("\nBooking complete!\n")
+
+if __name__ == "__main__":
+    main()
